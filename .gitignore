@@ -30,3 +30,6 @@ artifacts/
 .cloudbase/
 # Other Dockerfiles
 Dockerfile.*
+
+.idea/
+./vscode/
