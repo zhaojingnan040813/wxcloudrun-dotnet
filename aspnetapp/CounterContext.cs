@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using aspnetapp.Models;
 
 namespace aspnetapp
 {
@@ -11,6 +12,7 @@ namespace aspnetapp
         {
         }
         public DbSet<Counter> Counters { get; set; } = null!;
+        public DbSet<User> Users { get; set; } = null!;
         public CounterContext(DbContextOptions<CounterContext> options)
             : base(options)
         {
@@ -34,7 +36,25 @@ namespace aspnetapp
         {
             modelBuilder.UseCollation("utf8_general_ci")
                 .HasCharSet("utf8");
+            
+            // Counter 表配置
             modelBuilder.Entity<Counter>().ToTable("Counters");
+            
+            // User 表配置
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.ToTable("Users");
+                
+                // 设置唯一索引
+                entity.HasIndex(e => e.Username).IsUnique();
+                entity.HasIndex(e => e.Email).IsUnique();
+                
+                // 字段长度约束
+                entity.Property(e => e.Username).HasMaxLength(20);
+                entity.Property(e => e.Email).HasMaxLength(100);
+                entity.Property(e => e.PasswordHash).HasMaxLength(255);
+            });
+            
             OnModelCreatingPartial(modelBuilder);
         }
 

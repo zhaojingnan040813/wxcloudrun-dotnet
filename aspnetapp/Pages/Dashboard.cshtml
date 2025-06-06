@@ -1,0 +1,275 @@
+@page
+@model DashboardModel
+@{
+    ViewData["Title"] = "用户仪表板";
+}
+
+<div class="container-fluid">
+    <div id="loading-spinner" class="d-flex justify-content-center align-items-center" style="height: 50vh;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">加载中...</span>
+        </div>
+    </div>
+
+    <div id="dashboard-content" style="display: none;">
+        <!-- 用户信息卡片 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0"><i class="fas fa-tachometer-alt"></i> 欢迎来到用户仪表板</h4>
+                        <button class="btn btn-light btn-sm" onclick="handleLogout()">
+                            <i class="fas fa-sign-out-alt"></i> 登出
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h5 class="text-primary">👋 欢迎回来，<span id="username">用户</span>！</h5>
+                                <p class="mb-2"><strong>邮箱：</strong> <span id="email">-</span></p>
+                                <p class="mb-2"><strong>注册时间：</strong> <span id="createdAt">-</span></p>
+                                <p class="mb-0"><strong>账户状态：</strong> 
+                                    <span class="badge bg-success" id="status">激活</span>
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <i class="fas fa-user-circle fa-5x text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能模块 -->
+        <div class="row">
+            <!-- 计数器模块 -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-calculator"></i> 计数器功能</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="display-4 text-info mb-3" id="counterValue">0</div>
+                        <p class="text-muted mb-4">当前计数值</p>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-success" onclick="incrementCounter()" id="incBtn">
+                                <i class="fas fa-plus"></i> 增加
+                            </button>
+                            <button class="btn btn-warning" onclick="clearCounter()" id="clearBtn">
+                                <i class="fas fa-redo"></i> 清零
+                            </button>
+                        </div>
+                        <div id="counterSpinner" class="mt-2" style="display: none;">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 系统信息模块 -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="fas fa-info-circle"></i> 系统信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-server text-primary"></i> 
+                                <strong>框架：</strong> ASP.NET Core 6.0
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-database text-success"></i> 
+                                <strong>数据库：</strong> MySQL
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-shield-alt text-warning"></i> 
+                                <strong>认证：</strong> JWT Token
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-code text-info"></i> 
+                                <strong>前端：</strong> Razor Pages
+                            </li>
+                            <li class="mb-0">
+                                <i class="fas fa-book text-secondary"></i> 
+                                <strong>API文档：</strong> 
+                                <a href="/swagger" target="_blank" class="text-decoration-none">Swagger UI</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快速操作 -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-bolt"></i> 快速操作</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3 mb-3">
+                                <a href="/swagger" target="_blank" class="btn btn-outline-primary btn-lg w-100">
+                                    <i class="fas fa-book-open"></i><br>
+                                    <small>API 文档</small>
+                                </a>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <button class="btn btn-outline-success btn-lg w-100" onclick="refreshData()">
+                                    <i class="fas fa-sync-alt"></i><br>
+                                    <small>刷新数据</small>
+                                </button>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <button class="btn btn-outline-info btn-lg w-100" onclick="showUserInfo()">
+                                    <i class="fas fa-user-cog"></i><br>
+                                    <small>用户设置</small>
+                                </button>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <button class="btn btn-outline-danger btn-lg w-100" onclick="handleLogout()">
+                                    <i class="fas fa-sign-out-alt"></i><br>
+                                    <small>安全登出</small>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="access-denied" class="text-center" style="display: none;">
+        <h3>访问被拒绝</h3>
+        <p>请先登录以访问此页面</p>
+        <a href="/login" class="btn btn-primary">前往登录</a>
+    </div>
+</div>
+
+<script>
+    let currentUser = null;
+    let counterValue = 0;
+
+    // 页面加载时初始化
+    window.addEventListener('load', async function() {
+        await loadUserData();
+        await loadCounter();
+    });
+
+    async function loadUserData() {
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                showAccessDenied();
+                return;
+            }
+
+            const userInfoJson = localStorage.getItem('userInfo');
+            if (userInfoJson) {
+                currentUser = JSON.parse(userInfoJson);
+                displayUserInfo();
+                showDashboard();
+            } else {
+                showAccessDenied();
+            }
+        } catch (error) {
+            console.error('加载用户数据失败:', error);
+            showAccessDenied();
+        }
+    }
+
+    function displayUserInfo() {
+        if (currentUser) {
+            document.getElementById('username').textContent = currentUser.username || '用户';
+            document.getElementById('email').textContent = currentUser.email || '-';
+            document.getElementById('createdAt').textContent = new Date(currentUser.createdAt).toLocaleString() || '-';
+            document.getElementById('status').textContent = currentUser.isActive ? '激活' : '未激活';
+        }
+    }
+
+    async function loadCounter() {
+        try {
+            const response = await fetch('/api/count');
+            if (response.ok) {
+                const data = await response.json();
+                counterValue = data.data || 0;
+                document.getElementById('counterValue').textContent = counterValue;
+            }
+        } catch (error) {
+            console.error('加载计数器失败:', error);
+        }
+    }
+
+    async function incrementCounter() {
+        await updateCounter('inc');
+    }
+
+    async function clearCounter() {
+        await updateCounter('clear');
+    }
+
+    async function updateCounter(action) {
+        const incBtn = document.getElementById('incBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const spinner = document.getElementById('counterSpinner');
+
+        // 显示加载状态
+        incBtn.disabled = true;
+        clearBtn.disabled = true;
+        spinner.style.display = 'block';
+
+        try {
+            const response = await fetch('/api/count', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ action: action })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                counterValue = data.data || 0;
+                document.getElementById('counterValue').textContent = counterValue;
+            }
+        } catch (error) {
+            console.error('更新计数器失败:', error);
+        } finally {
+            // 隐藏加载状态
+            incBtn.disabled = false;
+            clearBtn.disabled = false;
+            spinner.style.display = 'none';
+        }
+    }
+
+    async function refreshData() {
+        await loadCounter();
+    }
+
+    function showUserInfo() {
+        if (currentUser) {
+            alert(`用户信息：\n用户名: ${currentUser.username}\n邮箱: ${currentUser.email}\n注册时间: ${new Date(currentUser.createdAt).toLocaleString()}`);
+        }
+    }
+
+    function handleLogout() {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userInfo');
+        window.location.href = '/login';
+    }
+
+    function showDashboard() {
+        document.getElementById('loading-spinner').style.display = 'none';
+        document.getElementById('dashboard-content').style.display = 'block';
+        document.getElementById('access-denied').style.display = 'none';
+    }
+
+    function showAccessDenied() {
+        document.getElementById('loading-spinner').style.display = 'none';
+        document.getElementById('dashboard-content').style.display = 'none';
+        document.getElementById('access-denied').style.display = 'block';
+    }
+</script> 

@@ -1,0 +1,191 @@
+@page
+@model RegisterPageModel
+@{
+    ViewData["Title"] = "用户注册";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white text-center">
+                    <h3><i class="fas fa-user-plus"></i> 用户注册</h3>
+                </div>
+                <div class="card-body">
+                    <div id="error-message" class="alert alert-danger" role="alert" style="display: none;">
+                        <i class="fas fa-exclamation-triangle"></i> <span id="error-text"></span>
+                    </div>
+
+                    <div id="success-message" class="alert alert-success" role="alert" style="display: none;">
+                        <i class="fas fa-check-circle"></i> <span id="success-text"></span>
+                    </div>
+
+                    <form id="registerForm">
+                        <div class="form-group mb-3">
+                            <label for="username" class="form-label">
+                                <i class="fas fa-user"></i> 用户名 <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" id="username" class="form-control" placeholder="3-20个字符" required />
+                            <div class="form-text">用户名长度必须在3-20个字符之间</div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope"></i> 邮箱地址 <span class="text-danger">*</span>
+                            </label>
+                            <input type="email" id="email" class="form-control" placeholder="example@domain.com" required />
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock"></i> 密码 <span class="text-danger">*</span>
+                            </label>
+                            <input type="password" id="password" class="form-control" placeholder="至少6个字符" required />
+                            <div class="form-text">密码长度必须在6-100个字符之间</div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="confirmPassword" class="form-label">
+                                <i class="fas fa-lock"></i> 确认密码 <span class="text-danger">*</span>
+                            </label>
+                            <input type="password" id="confirmPassword" class="form-control" placeholder="再次输入密码" required />
+                            <div id="password-mismatch" class="text-danger" style="display: none;">密码不一致</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success" id="registerBtn">
+                                <i class="fas fa-user-plus"></i> 注册
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr>
+                    <div class="text-center">
+                        <p class="mb-0">已有账户？ 
+                            <a href="/login" class="text-decoration-none">
+                                <i class="fas fa-sign-in-alt"></i> 立即登录
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 检查是否已经登录
+    window.addEventListener('load', function() {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            window.location.href = '/dashboard';
+        }
+    });
+
+    // 密码确认验证
+    document.getElementById('confirmPassword').addEventListener('input', function() {
+        const password = document.getElementById('password').value;
+        const confirmPassword = this.value;
+        const mismatchDiv = document.getElementById('password-mismatch');
+        const registerBtn = document.getElementById('registerBtn');
+
+        if (confirmPassword && password !== confirmPassword) {
+            mismatchDiv.style.display = 'block';
+            registerBtn.disabled = true;
+        } else {
+            mismatchDiv.style.display = 'none';
+            registerBtn.disabled = false;
+        }
+    });
+
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const registerBtn = document.getElementById('registerBtn');
+        const errorDiv = document.getElementById('error-message');
+        const successDiv = document.getElementById('success-message');
+
+        // 重置消息
+        errorDiv.style.display = 'none';
+        successDiv.style.display = 'none';
+
+        // 验证输入
+        if (!username || !email || !password || !confirmPassword) {
+            showError('请填写所有字段');
+            return;
+        }
+
+        if (username.length < 3 || username.length > 20) {
+            showError('用户名长度必须在3-20个字符之间');
+            return;
+        }
+
+        if (password.length < 6) {
+            showError('密码长度至少为6个字符');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            showError('密码不一致，请重新输入');
+            return;
+        }
+
+        // 验证邮箱格式
+        const emailRegex = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+        if (!emailRegex.test(email)) {
+            showError('邮箱格式不正确');
+            return;
+        }
+
+        // 显示加载状态
+        registerBtn.disabled = true;
+        registerBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 注册中...';
+
+        try {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    email: email,
+                    password: password
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                showSuccess('注册成功！正在跳转到登录页面...');
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 2000);
+            } else {
+                showError(data.message || '注册失败，请稍后重试');
+            }
+        } catch (error) {
+            showError('网络错误，请检查网络连接');
+        } finally {
+            // 恢复按钮状态
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> 注册';
+        }
+    });
+
+    function showError(message) {
+        document.getElementById('error-text').textContent = message;
+        document.getElementById('error-message').style.display = 'block';
+        document.getElementById('success-message').style.display = 'none';
+    }
+
+    function showSuccess(message) {
+        document.getElementById('success-text').textContent = message;
+        document.getElementById('success-message').style.display = 'block';
+        document.getElementById('error-message').style.display = 'none';
+    }
+</script> 
